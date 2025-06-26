@@ -2,13 +2,17 @@ package pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
 
 public class LoginPage {
-    private WebDriver driver;
+    private WebDriverWait wait;
 
     // Constructor
     public LoginPage(WebDriver driver) {
-        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
     // Locators
@@ -19,19 +23,23 @@ public class LoginPage {
 
     // Actions
     public void enterUsername(String username) {
-        driver.findElement(usernameInput).sendKeys(username);
+        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(usernameInput));
+        element.sendKeys(username);
     }
 
     public void enterPassword(String password) {
-        driver.findElement(passwordInput).sendKeys(password);
+        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(passwordInput));
+        element.sendKeys(password);
     }
 
     public void clickLogin() {
-        driver.findElement(loginButton).click();
+        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(loginButton));
+        element.click();
     }
 
     public String getErrorMessage() {
-        return driver.findElement(errorMessage).getText();
+        WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(errorMessage));
+        return element.getText();
     }
 
     public void login(String username, String password) {
