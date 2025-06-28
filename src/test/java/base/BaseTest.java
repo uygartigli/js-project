@@ -7,13 +7,14 @@ import org.testng.ITestResult;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 
+import utils.ConfigReader;
 import utils.WebDriverFactory;
 import utils.ExtentReportManager;
 
 public class BaseTest {
     protected WebDriver driver;
-    protected ExtentReports extent;
-    protected ExtentTest test;
+    protected static ExtentReports extent;
+    protected static ExtentTest test;
 
     @BeforeSuite
     public void setupReport() {
@@ -29,8 +30,8 @@ public class BaseTest {
     
     @BeforeMethod
     public void setUp(ITestResult result) {
-        driver = WebDriverFactory.createDriver("chrome");
-        driver.manage().window().maximize();
+        driver = WebDriverFactory.getDriver();
+        driver.get(ConfigReader.get("baseUrl"));
         
         // Test will be created manually in each test method with custom name
     }

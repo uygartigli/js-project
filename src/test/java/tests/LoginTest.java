@@ -25,6 +25,8 @@ public class LoginTest extends BaseTest {
         String error = loginPage.getErrorMessage();
         test.info("Error message: " + error);
 
+        Assert.assertNotNull(error, "Error message should not be null.");
+        Assert.assertFalse(error.isEmpty(), "Error message should not be empty.");
         Assert.assertTrue(error.contains(EXPECTED_ERROR_MESSAGE), "Expected an error message for invalid credentials.");
         test.pass("Test passed: Error message contains expected text: " + EXPECTED_ERROR_MESSAGE);
 
