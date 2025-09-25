@@ -1,0 +1,19 @@
+services:
+  selenium-hub:
+    image: selenium/standalone-chrome:120.0
+    container_name: selenium-hub
+    ports:
+      - "4444:4444"   # WebDriver Hub
+      - "7900:7900"   # VNC port
+    environment:
+      - SE_VNC_PASSWORD=secret
+      - SE_SCREEN_WIDTH=1920
+      - SE_SCREEN_HEIGHT=1080
+
+  test-runner:
+    build: .
+    container_name: test-runner
+    depends_on:
+      - selenium-hub
+    environment:
+      - SELENIUM_REMOTE_URL=http://selenium-hub:4444/wd/hub
