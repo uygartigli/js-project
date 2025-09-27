@@ -170,7 +170,6 @@ videos/
 *.avi
 
 # Configuration files with sensitive data
-config.properties
 secrets.properties
 *.key
 *.pem
