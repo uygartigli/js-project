@@ -13,8 +13,8 @@ COPY src/test/resources/simplelogger.properties ./src/test/resources/simplelogge
 
 # Download dependencies
 RUN mvn dependency:go-offline -B
-# Clean test-output directory
-RUN rm -rf test-output
+# Create reports directory structure
+RUN mkdir -p /app/reports/html-reports
 
 # Start tests
 CMD ["mvn", "clean", "test"]

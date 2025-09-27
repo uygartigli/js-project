@@ -9,11 +9,20 @@ services:
       - SE_VNC_PASSWORD=secret
       - SE_SCREEN_WIDTH=1920
       - SE_SCREEN_HEIGHT=1080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/wd/hub/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   test-runner:
     build: .
     container_name: test-runner
     depends_on:
-      - selenium-hub
+      selenium-hub:
+        condition: service_healthy
     environment:
       - SELENIUM_REMOTE_URL=http://selenium-hub:4444/wd/hub
+    volumes:
+      - ./reports:/app/reports

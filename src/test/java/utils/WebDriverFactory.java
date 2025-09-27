@@ -72,39 +72,70 @@ public class WebDriverFactory {
     }
     
     private static WebDriver createRemoteDriver(String browser, String seleniumUrl) {
-        try {
-            URL gridUrl = new URL(seleniumUrl);
-            
-            switch (browser) {
-                case "firefox":
-                    logger.debug("Creating remote Firefox driver");
-                    return new RemoteWebDriver(gridUrl, new FirefoxOptions());
-                    
-                case "edge":
-                    logger.debug("Creating remote Edge driver");
-                    return new RemoteWebDriver(gridUrl, new EdgeOptions());
-                    
-                case "safari":
-                    logger.debug("Creating remote Safari driver");
-                    return new RemoteWebDriver(gridUrl, new SafariOptions());
-                    
-                case "chrome":
-                default:
-                    logger.debug("Creating remote Chrome driver");
-                    ChromeOptions chromeOptions = new ChromeOptions();
-                    chromeOptions.addArguments("--headless=new");
-                    chromeOptions.addArguments("--no-sandbox");
-                    chromeOptions.addArguments("--disable-dev-shm-usage");
-                    chromeOptions.addArguments("--disable-gpu");
-                    chromeOptions.addArguments("--window-size=1920,1080");
-                    return new RemoteWebDriver(gridUrl, chromeOptions);
+        int maxRetries = 3;
+        int retryDelay = 5000; // 5 seconds
+        
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                URL gridUrl = new URL(seleniumUrl);
+                logger.info("Attempting to connect to Selenium Grid (attempt {}/{})", attempt, maxRetries);
+                
+                WebDriver driver = createRemoteDriverWithOptions(browser, gridUrl);
+                logger.info("Successfully connected to Selenium Grid on attempt {}", attempt);
+                return driver;
+                
+            } catch (MalformedURLException e) {
+                logger.error("Invalid Selenium Grid URL: {}", seleniumUrl, e);
+                throw new RuntimeException("Invalid Selenium Grid URL: " + seleniumUrl, e);
+            } catch (Exception e) {
+                logger.warn("Failed to create remote WebDriver for browser: {} (attempt {}/{})", browser, attempt, maxRetries, e);
+                
+                if (attempt == maxRetries) {
+                    logger.error("Failed to create remote WebDriver after {} attempts", maxRetries);
+                    throw new RuntimeException("Failed to create remote WebDriver for browser: " + browser + " after " + maxRetries + " attempts", e);
+                }
+                
+                try {
+                    logger.info("Waiting {}ms before retry...", retryDelay);
+                    Thread.sleep(retryDelay);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Interrupted while waiting for retry", ie);
+                }
             }
-        } catch (MalformedURLException e) {
-            logger.error("Invalid Selenium Grid URL: {}", seleniumUrl, e);
-            throw new RuntimeException("Invalid Selenium Grid URL: " + seleniumUrl, e);
-        } catch (Exception e) {
-            logger.error("Failed to create remote WebDriver for browser: {}", browser, e);
-            throw new RuntimeException("Failed to create remote WebDriver for browser: " + browser, e);
+        }
+        
+        throw new RuntimeException("Failed to create remote WebDriver after " + maxRetries + " attempts");
+    }
+    
+    private static WebDriver createRemoteDriverWithOptions(String browser, URL gridUrl) {
+        switch (browser) {
+            case "firefox":
+                logger.debug("Creating remote Firefox driver");
+                return new RemoteWebDriver(gridUrl, new FirefoxOptions());
+                
+            case "edge":
+                logger.debug("Creating remote Edge driver");
+                return new RemoteWebDriver(gridUrl, new EdgeOptions());
+                
+            case "safari":
+                logger.debug("Creating remote Safari driver");
+                return new RemoteWebDriver(gridUrl, new SafariOptions());
+                
+            case "chrome":
+            default:
+                logger.debug("Creating remote Chrome driver");
+                ChromeOptions chromeOptions = new ChromeOptions();
+                chromeOptions.addArguments("--headless=new");
+                chromeOptions.addArguments("--no-sandbox");
+                chromeOptions.addArguments("--disable-dev-shm-usage");
+                chromeOptions.addArguments("--disable-gpu");
+                chromeOptions.addArguments("--window-size=1920,1080");
+                chromeOptions.addArguments("--disable-extensions");
+                chromeOptions.addArguments("--disable-plugins");
+                chromeOptions.addArguments("--disable-images");
+                chromeOptions.addArguments("--disable-javascript");
+                return new RemoteWebDriver(gridUrl, chromeOptions);
         }
     }
     
