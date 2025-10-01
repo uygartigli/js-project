@@ -123,29 +123,27 @@ jobs:
         if: failure()
         run: |
           mkdir -p ./pages
-          cat > ./pages/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>Test Reports</title>
-              <style>
-                  body { font-family: Arial, sans-serif; margin: 40px; }
-                  .container { max-width: 800px; margin: 0 auto; }
-                  .header { color: #333; border-bottom: 2px solid #007acc; padding-bottom: 10px; }
-                  .content { margin-top: 20px; }
-              </style>
-          </head>
-          <body>
-              <div class="container">
-                  <h1 class="header">Test Reports</h1>
-                  <div class="content">
-                      <p>No test reports available for this run.</p>
-                      <p>This could be due to test failures or missing artifacts.</p>
-                  </div>
-              </div>
-          </body>
-          </html>
-          EOF
+          echo '<!DOCTYPE html>' > ./pages/index.html
+          echo '<html>' >> ./pages/index.html
+          echo '<head>' >> ./pages/index.html
+          echo '<title>Test Reports</title>' >> ./pages/index.html
+          echo '<style>' >> ./pages/index.html
+          echo 'body { font-family: Arial, sans-serif; margin: 40px; }' >> ./pages/index.html
+          echo '.container { max-width: 800px; margin: 0 auto; }' >> ./pages/index.html
+          echo '.header { color: #333; border-bottom: 2px solid #007acc; padding-bottom: 10px; }' >> ./pages/index.html
+          echo '.content { margin-top: 20px; }' >> ./pages/index.html
+          echo '</style>' >> ./pages/index.html
+          echo '</head>' >> ./pages/index.html
+          echo '<body>' >> ./pages/index.html
+          echo '<div class="container">' >> ./pages/index.html
+          echo '<h1 class="header">Test Reports</h1>' >> ./pages/index.html
+          echo '<div class="content">' >> ./pages/index.html
+          echo '<p>No test reports available for this run.</p>' >> ./pages/index.html
+          echo '<p>This could be due to test failures or missing artifacts.</p>' >> ./pages/index.html
+          echo '</div>' >> ./pages/index.html
+          echo '</div>' >> ./pages/index.html
+          echo '</body>' >> ./pages/index.html
+          echo '</html>' >> ./pages/index.html
 
       # Verify report content before upload
       - name: Verify Report Content
@@ -158,13 +156,11 @@ jobs:
           else
             echo "⚠️ No report content found, creating minimal report"
             mkdir -p ./pages
-            cat > ./pages/index.html << 'EOF'
-            <!DOCTYPE html>
-            <html>
-            <head><title>Test Reports</title></head>
-            <body><h1>Test Reports</h1><p>No test reports available for this run.</p></body>
-            </html>
-            EOF
+            echo '<!DOCTYPE html>' > ./pages/index.html
+            echo '<html>' >> ./pages/index.html
+            echo '<head><title>Test Reports</title></head>' >> ./pages/index.html
+            echo '<body><h1>Test Reports</h1><p>No test reports available for this run.</p></body>' >> ./pages/index.html
+            echo '</html>' >> ./pages/index.html
           fi
 
       # Upload pages artifact
