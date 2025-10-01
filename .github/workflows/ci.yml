@@ -27,11 +27,35 @@ jobs:
 
       # Run Tests in Docker
       - name: Run Tests in Docker
-        run: docker run --name selenium-tests-container selenium-tests
+        run: |
+          # Run tests and capture exit code
+          docker run --name selenium-tests-container selenium-tests
+          TEST_EXIT_CODE=$?
+          
+          # Copy reports regardless of test result
+          docker cp selenium-tests-container:/app/test-output ./test-output || true
+          
+          # Clean up container
+          docker rm selenium-tests-container || true
+          
+          # Fail the pipeline if tests failed
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "❌ Tests failed with exit code: $TEST_EXIT_CODE"
+            echo "Pipeline will fail to prevent merging broken code."
+            exit 1
+          else
+            echo "✅ All tests passed successfully!"
+          fi
 
-      # Copy Extent Reports from Docker
-      - name: Copy Extent Reports from Docker
-        run: docker cp selenium-tests-container:/app/test-output ./test-output
+      # Copy Extent Reports from Docker (already done above, but keeping for clarity)
+      - name: Verify Test Reports
+        run: |
+          if [ -d "./test-output" ]; then
+            echo "Test reports generated successfully"
+            ls -la ./test-output/
+          else
+            echo "⚠️ No test reports found"
+          fi
 
       # Archive Extent Report
       - name: Archive Extent Report

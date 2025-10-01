@@ -16,5 +16,5 @@ RUN mvn dependency:go-offline -B
 # Create reports directory structure
 RUN mkdir -p /app/reports/html-reports
 
-# Start tests
-CMD ["mvn", "clean", "test"]
+# Start tests with proper exit code handling
+CMD ["mvn", "clean", "test", "-Dmaven.test.failure.ignore=false"]
