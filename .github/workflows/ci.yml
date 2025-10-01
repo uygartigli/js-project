@@ -103,6 +103,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # Clean up any existing artifacts to prevent conflicts
+      - name: Clean up existing artifacts
+        run: |
+          # Remove any existing report directories
+          rm -rf ./report ./reports
+          mkdir -p ./report
+
       # Download Extent Report artifact (with fallback)
       - name: Download Extent Report artifact
         uses: actions/download-artifact@v4
@@ -118,7 +125,19 @@ jobs:
           mkdir -p ./report
           echo "<html><body><h1>Test Reports</h1><p>No test reports available for this run.</p></body></html>" > ./report/index.html
 
-      # Upload pages artifact
+      # Verify report content before upload
+      - name: Verify Report Content
+        run: |
+          if [ -d "./report" ] && [ "$(ls -A ./report)" ]; then
+            echo "✅ Report content verified"
+            ls -la ./report/
+          else
+            echo "⚠️ No report content found, creating minimal report"
+            mkdir -p ./report
+            echo "<html><body><h1>Test Reports</h1><p>No test reports available for this run.</p></body></html>" > ./report/index.html
+          fi
+
+      # Upload pages artifact with unique naming
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
