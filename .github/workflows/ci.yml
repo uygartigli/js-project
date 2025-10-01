@@ -21,22 +21,34 @@ jobs:
           java-version: '17'
           cache: maven
 
-      # Docker image build
-      - name: Build Docker Image
+      # Start Selenium Grid
+      - name: Start Selenium Grid
+        run: |
+          docker-compose up -d selenium-hub
+          echo "Waiting for Selenium Hub to be ready..."
+          timeout 60 bash -c 'until curl -f http://localhost:4444/wd/hub/status; do sleep 2; done'
+          echo "Selenium Hub is ready!"
+
+      # Build test image
+      - name: Build Test Image
         run: docker build -t selenium-tests .
 
-      # Run Tests in Docker
-      - name: Run Tests in Docker
+      # Run Tests with Selenium Grid
+      - name: Run Tests with Selenium Grid
         run: |
-          # Run tests and capture exit code
-          docker run --name selenium-tests-container selenium-tests
+          # Run tests using Selenium Grid
+          docker run --name selenium-tests-container \
+            --network js-project_default \
+            -e SELENIUM_REMOTE_URL=http://selenium-hub:4444/wd/hub \
+            selenium-tests
           TEST_EXIT_CODE=$?
           
           # Copy reports regardless of test result
           docker cp selenium-tests-container:/app/test-output ./test-output || true
           
-          # Clean up container
+          # Clean up containers
           docker rm selenium-tests-container || true
+          docker-compose down || true
           
           # Fail the pipeline if tests failed
           if [ $TEST_EXIT_CODE -ne 0 ]; then
