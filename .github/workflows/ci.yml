@@ -21,22 +21,34 @@ jobs:
           java-version: '17'
           cache: maven
 
-      # Docker image build
-      - name: Build Docker Image
+      # Start Selenium Grid
+      - name: Start Selenium Grid
+        run: |
+          docker compose up -d selenium-hub
+          echo "Waiting for Selenium Hub to be ready..."
+          timeout 60 bash -c 'until curl -f http://localhost:4444/wd/hub/status; do sleep 2; done'
+          echo "Selenium Hub is ready!"
+
+      # Build test image
+      - name: Build Test Image
         run: docker build -t selenium-tests .
 
-      # Run Tests in Docker
-      - name: Run Tests in Docker
+      # Run Tests with Selenium Grid
+      - name: Run Tests with Selenium Grid
         run: |
-          # Run tests and capture exit code
-          docker run --name selenium-tests-container selenium-tests
+          # Run tests using Selenium Grid
+          docker run --name selenium-tests-container \
+            --network js-project_default \
+            -e SELENIUM_REMOTE_URL=http://selenium-hub:4444/wd/hub \
+            selenium-tests
           TEST_EXIT_CODE=$?
           
           # Copy reports regardless of test result
-          docker cp selenium-tests-container:/app/test-output ./test-output || true
+          docker cp selenium-tests-container:/app/reports ./reports || true
           
-          # Clean up container
+          # Clean up containers
           docker rm selenium-tests-container || true
+          docker compose down || true
           
           # Fail the pipeline if tests failed
           if [ $TEST_EXIT_CODE -ne 0 ]; then
@@ -50,38 +62,65 @@ jobs:
       # Copy Extent Reports from Docker (already done above, but keeping for clarity)
       - name: Verify Test Reports
         run: |
-          if [ -d "./test-output" ]; then
+          if [ -d "./reports" ]; then
             echo "Test reports generated successfully"
-            ls -la ./test-output/
+            ls -la ./reports/
+            # Check for specific report files
+            if [ -f "./reports/html-reports/DemoQA_ExtentReport.html" ]; then
+              echo "✅ ExtentReport found!"
+            else
+              echo "⚠️ ExtentReport not found in expected location"
+            fi
           else
-            echo "⚠️ No test reports found"
+            echo "⚠️ No reports directory found"
           fi
 
-      # Archive Extent Report
+      # Archive Extent Report (only if reports exist)
       - name: Archive Extent Report
+        if: success() && hashFiles('reports/**') != ''
         uses: actions/upload-artifact@v4
         with:
           name: extent-report
-          path: test-output/
+          path: reports/
+          retention-days: 30
 
   deploy-report:
     needs: test
     runs-on: ubuntu-latest
+    # Only run if the test job succeeded and the branch is main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+    # Add permissions for GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Download Extent Report artifact
+      # Download Extent Report artifact (with fallback)
       - name: Download Extent Report artifact
         uses: actions/download-artifact@v4
         with:
           name: extent-report
           path: ./report
+        continue-on-error: true
+
+      # Create fallback report if artifact not found
+      - name: Create Fallback Report
+        if: failure()
+        run: |
+          mkdir -p ./report
+          echo "<html><body><h1>Test Reports</h1><p>No test reports available for this run.</p></body></html>" > ./report/index.html
+
+      # Upload pages artifact
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./report
 
       # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./report
+        id: deployment
+        uses: actions/deploy-pages@v4
