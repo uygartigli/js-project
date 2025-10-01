@@ -122,6 +122,7 @@ jobs:
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
+          name: github-pages
           path: ./report
 
       # Deploy to GitHub Pages
