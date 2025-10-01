@@ -44,7 +44,7 @@ jobs:
           TEST_EXIT_CODE=$?
           
           # Copy reports regardless of test result
-          docker cp selenium-tests-container:/app/test-output ./test-output || true
+          docker cp selenium-tests-container:/app/reports ./reports || true
           
           # Clean up containers
           docker rm selenium-tests-container || true
@@ -62,34 +62,52 @@ jobs:
       # Copy Extent Reports from Docker (already done above, but keeping for clarity)
       - name: Verify Test Reports
         run: |
-          if [ -d "./test-output" ]; then
+          if [ -d "./reports" ]; then
             echo "Test reports generated successfully"
-            ls -la ./test-output/
+            ls -la ./reports/
+            # Check for specific report files
+            if [ -f "./reports/html-reports/DemoQA_ExtentReport.html" ]; then
+              echo "✅ ExtentReport found!"
+            else
+              echo "⚠️ ExtentReport not found in expected location"
+            fi
           else
-            echo "⚠️ No test reports found"
+            echo "⚠️ No reports directory found"
           fi
 
-      # Archive Extent Report
+      # Archive Extent Report (only if reports exist)
       - name: Archive Extent Report
+        if: success() && hashFiles('reports/**') != ''
         uses: actions/upload-artifact@v4
         with:
           name: extent-report
-          path: test-output/
+          path: reports/
+          retention-days: 30
 
   deploy-report:
     needs: test
     runs-on: ubuntu-latest
+    # Only run if the test job succeeded
+    if: success()
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Download Extent Report artifact
+      # Download Extent Report artifact (with fallback)
       - name: Download Extent Report artifact
         uses: actions/download-artifact@v4
         with:
           name: extent-report
           path: ./report
+        continue-on-error: true
+
+      # Create fallback report if artifact not found
+      - name: Create Fallback Report
+        if: failure()
+        run: |
+          mkdir -p ./report
+          echo "<html><body><h1>Test Reports</h1><p>No test reports available for this run.</p></body></html>" > ./report/index.html
 
       # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
