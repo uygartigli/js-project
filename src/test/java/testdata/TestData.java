@@ -7,5 +7,5 @@ public class TestData {
     public static final String INVALID_USERNAME = "wrongUser";
     public static final String INVALID_PASSWORD = "wrongPassword";
 
-    public static final String EXPECTED_ERROR_MESSAGE = "Invalid";
+    public static final String EXPECTED_ERROR_MESSAGE = "AAAA";
 }
