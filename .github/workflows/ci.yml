@@ -24,7 +24,7 @@ jobs:
       # Start Selenium Grid
       - name: Start Selenium Grid
         run: |
-          docker-compose up -d selenium-hub
+          docker compose up -d selenium-hub
           echo "Waiting for Selenium Hub to be ready..."
           timeout 60 bash -c 'until curl -f http://localhost:4444/wd/hub/status; do sleep 2; done'
           echo "Selenium Hub is ready!"
@@ -48,7 +48,7 @@ jobs:
           
           # Clean up containers
           docker rm selenium-tests-container || true
-          docker-compose down || true
+          docker compose down || true
           
           # Fail the pipeline if tests failed
           if [ $TEST_EXIT_CODE -ne 0 ]; then
