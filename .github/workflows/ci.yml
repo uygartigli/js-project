@@ -89,6 +89,10 @@ jobs:
     runs-on: ubuntu-latest
     # Only run if the test job succeeded and the branch is main
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+    # Add environment for GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     # Add permissions for GitHub Pages
     permissions:
       contents: read
