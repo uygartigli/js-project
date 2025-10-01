@@ -103,45 +103,75 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Clean up any existing artifacts to prevent conflicts
-      - name: Clean up existing artifacts
+      # Clean up any existing artifacts and directories
+      - name: Clean up workspace
         run: |
           # Remove any existing report directories
-          rm -rf ./report ./reports
-          mkdir -p ./report
+          rm -rf ./report ./reports ./pages
+          mkdir -p ./pages
 
       # Download Extent Report artifact (with fallback)
       - name: Download Extent Report artifact
         uses: actions/download-artifact@v4
         with:
           name: extent-report
-          path: ./report
+          path: ./pages
         continue-on-error: true
 
       # Create fallback report if artifact not found
       - name: Create Fallback Report
         if: failure()
         run: |
-          mkdir -p ./report
-          echo "<html><body><h1>Test Reports</h1><p>No test reports available for this run.</p></body></html>" > ./report/index.html
+          mkdir -p ./pages
+          cat > ./pages/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Test Reports</title>
+              <style>
+                  body { font-family: Arial, sans-serif; margin: 40px; }
+                  .container { max-width: 800px; margin: 0 auto; }
+                  .header { color: #333; border-bottom: 2px solid #007acc; padding-bottom: 10px; }
+                  .content { margin-top: 20px; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1 class="header">Test Reports</h1>
+                  <div class="content">
+                      <p>No test reports available for this run.</p>
+                      <p>This could be due to test failures or missing artifacts.</p>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
 
       # Verify report content before upload
       - name: Verify Report Content
         run: |
-          if [ -d "./report" ] && [ "$(ls -A ./report)" ]; then
+          if [ -d "./pages" ] && [ "$(ls -A ./pages)" ]; then
             echo "✅ Report content verified"
-            ls -la ./report/
+            ls -la ./pages/
+            echo "Report files:"
+            find ./pages -type f -name "*.html" | head -5
           else
             echo "⚠️ No report content found, creating minimal report"
-            mkdir -p ./report
-            echo "<html><body><h1>Test Reports</h1><p>No test reports available for this run.</p></body></html>" > ./report/index.html
+            mkdir -p ./pages
+            cat > ./pages/index.html << 'EOF'
+            <!DOCTYPE html>
+            <html>
+            <head><title>Test Reports</title></head>
+            <body><h1>Test Reports</h1><p>No test reports available for this run.</p></body>
+            </html>
+            EOF
           fi
 
-      # Upload pages artifact with unique naming
+      # Upload pages artifact
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./report
+          path: ./pages
 
       # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
