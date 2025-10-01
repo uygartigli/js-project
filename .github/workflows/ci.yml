@@ -89,6 +89,11 @@ jobs:
     runs-on: ubuntu-latest
     # Only run if the test job succeeded
     if: success()
+    # Add permissions for GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
     steps:
       - name: Checkout repo
@@ -115,3 +120,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./report
+          cname: # Optional: add your custom domain here if you have one
