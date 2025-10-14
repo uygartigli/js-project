@@ -4,15 +4,12 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import java.time.Duration;
 
-public class LoginPage {
-    private WebDriverWait wait;
+public class LoginPage extends BasePage {
 
     // Constructor
     public LoginPage(WebDriver driver) {
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        super(driver);
     }
 
     // Locators
@@ -20,6 +17,7 @@ public class LoginPage {
     private By passwordInput = By.id("password");
     private By loginButton = By.id("login");
     private By errorMessage = By.id("name");
+    private By loggedInMessage = By.id("loading-label");
 
     // Actions
     public void enterUsername(String username) {
@@ -46,5 +44,14 @@ public class LoginPage {
         enterUsername(username);
         enterPassword(password);
         clickLogin();
+    }
+
+    public boolean isLoggedInMessagePresent() {
+        try {
+            WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(loggedInMessage));
+            return element.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

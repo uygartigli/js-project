@@ -4,7 +4,8 @@
         <listener class-name="listeners.TestListener"/>
     </listeners>
     
-    <test name="Login Tests">
+    <!-- Single test that includes both login and smoke groups -->
+    <test name="All Tests">
         <classes>
             <class name="tests.LoginTest"/>
         </classes>
